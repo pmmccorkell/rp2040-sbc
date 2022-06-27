@@ -75,30 +75,6 @@ class LS7366():
 		# Initial reading of counter.
 		self.read_counter()
 
-	# Function to convert unsigned bytes of length 'unsigned_l'
-	# 	into a signed int using twos compliment.
-	def twos_comp(self,unsigned_int,unsighned_l = 4):
-		# Initiate first byte of each mask in string format.
-		value_mask = '0x7f'		# Every bit following the sign.
-		sign_mask = '0x80'		# Only the signed bit.
-
-		# Iterate and append for additional bytes up to 'unsigned_l'.
-		for _ in range(unsighned_l-1):
-			value_mask += 'ff'
-			sign_mask += '00'
-
-		# Form base16 integers of the mask strings.
-		value_mask = int(value_mask,16)
-		sign_mask = int(sign_mask,16)
-
-		# Get the absolute value by bitwise comparing to the value_mask.
-		# Create boolean of negative (True) or positive (False) by bitwise comparing to sign_mask.
-		# If negative, subtract the sign_mask.
-		return (unsigned_int & value_mask) - (sign_mask * bool(unsigned_int & sign_mask))
-
-
-
-
 	def _read(self,nlength=4):
 		# Configure SPI bus to 0ph / 0pol
 		self._bus.configure(phase=0,polarity=0)
@@ -111,20 +87,17 @@ class LS7366():
 		# Gate the SPI bus by bringing chip select low,
 		#	and write the command RD CNTR,
 		#	and read into the 4 bytes buffer_in, received from the device.
-		self._cs.value = 0
-		self._bus.write(buffer.to_bytes(1,'big'))
-		self._bus.readinto(buffer_in)
-		self._cs.value = 1
-		# End gating to the device by bringing chip select high
+		self._cs.value = 0	# Gate device by setting chip select low.
+		self._bus.write(buffer.to_bytes(1,'big'))	# Write command 'RD CNTR' to the device across the MOSI line.
+		self._bus.readinto(buffer_in)				# Read into buffer_in object, from the MISO line.
+		self._cs.value = 1	# End gating to the device by setting chip select high.
+
 
 		# Convert buffer_in from the device into an integer.
 		buffer_int = int.from_bytes(buffer_in,'big')
-		# print(buffer_int)
+
 		# Convert the unsigned integer to a signed int using twos compliment.
 		self.last_count = self.twos_comp(buffer_int)
-		# print(self.last_count)
-		# print()
-		# return self.last_count
 
 	# Data must be in the form of a byte.
 	def _write(self, data_set):
@@ -157,6 +130,28 @@ class LS7366():
 		# print(action,register,buffer,act,target)
 		# Write the instruction byte.
 		self._write(buffer)
+
+
+	# Function to convert unsigned bytes of length 'unsigned_l'
+	# 	into a signed int using twos compliment.
+	def twos_comp(self,unsigned_int,unsigned_l = 4):
+		# Initiate first byte of each mask in string format.
+		value_mask = '0x7f'		# Every bit following the sign.
+		sign_mask = '0x80'		# Only the signed bit.
+
+		# Iterate and append for additional bytes up to 'unsigned_l'.
+		for _ in range(unsigned_l-1):
+			value_mask += 'ff'
+			sign_mask += '00'
+
+		# Form base16 integers of the mask strings.
+		value_mask = int(value_mask,16)
+		sign_mask = int(sign_mask,16)
+
+		# Get the absolute value by bitwise comparing to the value_mask.
+		# Create boolean of negative (True) or positive (False) by bitwise comparing to sign_mask.
+		# If negative, subtract the sign_mask.
+		return (unsigned_int & value_mask) - (sign_mask * bool(unsigned_int & sign_mask))
 
 	# 
 	def load_counter(self):
@@ -244,4 +239,5 @@ class LS7366():
 		self._read()
 		return self.last_count
 
-
+	def deinit(self):
+		return 1

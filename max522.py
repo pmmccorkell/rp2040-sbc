@@ -41,7 +41,7 @@ class MAX522():
 	# Data must be in the form of a byte.
 	def _write(self, data_set):
 		# Configure SPI bus to 0ph / 0pol per MAX522 datasheet page 10.
-		self._bus.configure(phase=0,polarity=0)
+		self._bus.configure(phase=0,polarity=0 )
 
 		# Gate the SPI bus by bringing chip select low,
 		#	and write the buffer.
@@ -75,22 +75,23 @@ class MAX522():
 		update_command = self._parse_command('load',id)
 		data_byte = self._clamp(int(val_int + 0.5))
 		self._write([update_command,data_byte])
+		return data_byte
 	def set_raw_A(self,val):
-		self.set_raw('A',val)	
+		return self.set_raw('A',val)	
 	def set_raw_B(self,val):
-		self.set_raw('B',val)
+		return self.set_raw('B',val)
 	def set_raw_all(self,val):
-		self.set_raw('all',val)
+		return self.set_raw('all',val)
 
 	# Functions to set channels A and B DACs using floats in range [0,1]
 	def set_dac(self,id,val_float):
-		self.set_raw(id,self._transform(val_float))
+		return self.set_raw(id,self._transform(val_float))
 	def set_dac_A(self,val):
-		self.set_dac('A',val)
+		return self.set_dac('A',val)
 	def set_dac_B(self,val):
-		self.set_dac('B',val)
+		return self.set_dac('B',val)
 	def set_dac_all(self,val):
-		self.set_dac('all',val)
+		return self.set_dac('all',val)
 
 	# Functions to shut down channels A and B DACs.
 	def shutdown(self,id):
@@ -111,6 +112,7 @@ class MAX522():
 	def deinit(self):
 		self.set_dac_all(0)
 		self.shutdown_all()
+		return 1
 
 
 

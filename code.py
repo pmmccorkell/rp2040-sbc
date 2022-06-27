@@ -22,9 +22,7 @@ print('Setting up SPI bus...', end="")
 while not spi.try_lock():
 	print('',end=".")
 print("\r\n SPI bus setup complete.")
-spi.configure(baudrate=2000000)
-# spi.configure(phase=0,polarity=0)
-spi.configure(phase=1,polarity=0)
+spi.configure(phase=1,polarity=0,baudrate=1000000)
 
 
 # encoder 1 chip select
@@ -104,43 +102,48 @@ def max522_iterate():
 		sleep(0.01)
 
 def test_form_control_byte():
-	adc_device.control_bits['START'] = 1
-	adc_device.control_bits['RNG'] = 1
-	print(adc_device._form_control_byte())
+	# adc_device.control_bits['START'] = 1
+	# adc_device.control_bits['BIP'] = 1
+	adc_device.bipolar = 1
+	return adc_device._form_control_byte(3)
 
 
-from collections import OrderedDict
-control_bits = OrderedDict([
-		('START' , 0),
-		('SEL2' , 0),
-		('SEL1' , 0),
-		('SEL0' , 0),
-		('RNG' , 0),
-		('BIP' , 0),
-		('PD1' , 0),
-		('PD0' , 0)
-	])
+def test_adc_from_dac():
+	adc_device.bipolar=0
+	adc_device.range=0
+	adc_device.power_mode = 1	# Use SCLK for the clock.
 
-def form_control_byte():
-	global control_bits
-	control_byte = 0x0
-	for v in control_bits.values():
-		control_byte <<= 1
-		control_byte += v
-		print(v, control_byte)
-	return control_byte.to_bytes(1,'big')
+	n = 100
+	for i in range(n):
+		print(dac_device.set_dac_all(i/n))
+		sleep(1)
+		print(adc_device.read_volts(5))
+		print(i/n*5)
+		print()
+		sleep(1)
+
+def test_reform_bytes():
+	asdf = 0xebf0 >> 4
+	print(asdf)
+
 
 while(1):
 # for _ in range(3):
-	print()
-	print(enc_device1.read_counter())
-	digipot_device.set_pot((abs(enc_device1.last_count) % 1024) / 1024)
-	print(enc_device1.last_count)
-	print(digipot_device.set_val)
+    print()
+    print(enc_device1.read_counter())
+    print(digipot_device.set_pot((abs(enc_device1.last_count) % 1024) / 1024))
+    print(dac_device.set_dac_all((abs(enc_device1.last_count) % 256) / 256)/256 * 5)
+    print(adc_device.read_volts(0))
+    print(adc_device.read_volts(5))
+    adc_device.bipolar= not adc_device.bipolar
+    sleep(0.3)
+
+
 	# max522_iterate()
-	print(test_form_control_byte())
-	sleep(1)
-	
+	# print(test_form_control_byte())
+	# adc_device.power_mode = 0
+	# test_adc_from_dac()
+	# test_reform_bytes()
 
 
 

@@ -6,6 +6,7 @@
 # Driver for 12bit ADC, MAX1270.
 
 from collections import OrderedDict
+from time import sleep
 
 # def tictoc(func):
 # 	def wrapper(*args):
@@ -34,37 +35,25 @@ class MAX1270():
 		self._cs = chip_select
 		self._cs.value = 1
 
-		self.outputs = {}
-		for i in range(8):
-			self.outputs[i]=0
+		self._init_max1270()
+
+
+	def _form_control_byte(self,channel=0):
+		control_byte = 0x80 + (channel << 4) + (self.range << 3) + (self.bipolar << 2) + self.power_mode
 		
+		# print(control_byte)
+		return control_byte.to_bytes(2,'big')	# Convert to byte of length 1, big-endian.
+
+	def _init_max1270(self):
 		# See datasheet page 11
-		# self.control_bits = OrderedDict([
-			# ('START', 1),	# 1bit; Must be 1 after cs' goes low. A high triggers the rest of this.
-			# ('SEL', 0),		# 3bit; Channel Select: 000 to 111 for ch0 to ch7.
-		# 	('RNG', 0),		# 1bit; Range: 0 5V, 1 10V
-		# 	('BIP', 0),		# 1bit; Bipolar: 0 unipolar, 1 bipolar
-		# 	('PD', 0),		# 2bit; PowerDown: 00 always on w/internal clock, 01 always on w/external clock, 
-		# 						# 11 full powerdown, 10 standby powerdown
-		# ])
 		self.range = 0		# 1bit; Range: 0 5V, 1 10V
 		self.bipolar = 0	# 1bit; Bipolar: 0 unipolar, 1 bipolar
 		self.power_mode = 0	# 2bit; PowerDown: 00 always on w/internal clock, 01 always on w/external clock, 
 		 						# 11 full powerdown, 10 standby powerdown
 
 		self.last_values = {}
-		# for i in range(8):
-		# 	self.last_values[i] = 0
-		self._init_max1270()
-
-
-	def _form_control_byte(self,channel=0):
-		control_byte = 0x80 + (channel << 4) + (self.range << 3) + (self.bipolar << 2) + self.power_mode
-		return control_byte.to_bytes(1,'big')	# Convert to byte of length 1, big-endian.
-
-	def _init_max1270(self):
 		for i in range(8):
-			self.last_values[i] = 0
+			self.last_values[i] = None
 
 
 	def _write(self,data_set):
@@ -83,44 +72,43 @@ class MAX1270():
 
 
 	def _read(self,channel,nlength=2):
-		# Configure SPI bus to 0ph / 0pol
-
+		# Configure SPI bus to 0ph / 0pol per datasheet page 10.
 		self._bus.configure(phase=0,polarity=0)
 		buffer_in = bytearray(nlength)
 
 		# RD CNTR -> 0x40 'RD' + 0x20 'CNTR' = 0x60
 		# 	instruction byte to the device.
-		buffer = self._form_control_byte(channel)
+		buffer_out = self._form_control_byte(channel)
 
 		# Gate the SPI bus by bringing chip select low,
 		#	and write the command RD CNTR,
 		#	and read into the 4 bytes buffer_in, received from the device.
 		self._cs.value = 0	# Gate device by setting chip select low.
-		self._bus.write(buffer)	# Write command 'RD CNTR' to the device across the MOSI line.
+		self._bus.write(buffer_out)	# Write command 'RD CNTR' to the device across the MOSI line.
 		self._bus.readinto(buffer_in)				# Read into buffer_in object, from the MISO line.
 		self._cs.value = 1	# End gating to the device by setting chip select high.
-		# buffer_in >>= 4
-		# print(buffer_in)
 
 		buffer_int = (int.from_bytes(buffer_in,'big')) >> 4
-		# print('reversed')
-		reversed_hex = '0x'
-		for i in list(reversed(hex(buffer_int))):
-			if i == 'x':
-				break
-			reversed_hex+=i
-		reversed_int = int(reversed_hex)
 
-		# print(buffer_in, buffer_int, reversed_int)  #, hex(buffer_int_b))
+		# print(buffer_in, buffer_int >>4) #, reversed_int)  #, hex(buffer_int_b))
 
 		# Convert the unsigned integer to a signed int using twos compliment.
-		return reversed_int
+		return buffer_int
+
+	def read_volts(self,channel):
+		read_buffer = self._read(channel)
+		signed_reading = (self.bipolar * self.twos_comp(read_buffer)) + ((not self.bipolar) * read_buffer)
+		scale = 0x1000/(1+self.bipolar)
+		scaled_reading = signed_reading/scale * ((self.range * 10) + ((not self.range) * 5))
+		self.last_values[channel] = scaled_reading
+		# print(read_buffer, signed_reading, scale, scaled_reading)
+		return scaled_reading
 
 	# Function to convert unsigned bytes of length 'unsigned_l'
 	# 	into a signed int using twos compliment.
-	def twos_comp(self,unsigned_int,unsigned_l = 4):
+	def twos_comp(self,unsigned_int,unsigned_l = 2):
 		# Initiate first byte of each mask in string format.
-		value_mask = '0x7f'		# Every bit following the sign.
+		value_mask = '0x07'		# Every bit following the sign.
 		sign_mask = '0x80'		# Only the signed bit.
 
 		# Iterate and append for additional bytes up to 'unsigned_l'.
@@ -136,15 +124,6 @@ class MAX1270():
 		# Create boolean of negative (True) or positive (False) by bitwise comparing to sign_mask.
 		# If negative, subtract the sign_mask.
 		return (unsigned_int & value_mask) - (sign_mask * bool(unsigned_int & sign_mask))
-
-	def read_volts(self,channel):
-		read_buffer = self._read(channel)
-		signed_reading = (self.bipolar * self.twos_comp(read_buffer)) + ((not self.bipolar) * read_buffer)
-		scale = 0xfff/(1+self.bipolar)
-		scaled_reading = signed_reading/scale * ((self.range * 10) + ((not self.range) * 5))
-		self.last_values[channel] = scaled_reading
-		# print(read_buffer, signed_reading, scale, scaled_reading)
-		return scaled_reading
 
 	def deinit(self):
 		return 1

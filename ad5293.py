@@ -88,11 +88,13 @@ class AD5293():
 
 		# Send it.
 		self._write([data_MSB,data_LSB])
+		return self.set_val
 
 	# Zero out the potentiometer during object deinitialization.
 	def deinit(self):
 		for _ in range(3):
 			self.set_pot(0)
+		return 1
 			
 
 
