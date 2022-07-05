@@ -35,6 +35,8 @@ class AD5293():
 
 		self.set_val = 0xffff
 
+		self._init_ad5293()
+
 	def _init_ad5293(self):
 		self._write([0x1b,0xff])
 		self._write([0x06,0x02])
@@ -42,7 +44,7 @@ class AD5293():
 	# write data to the SPI bus
 	# data shall be a list of 2 integers, both in range [0,255]
 	def _write(self,data):
-		# print(data)
+		# print(hex(data[0]),hex(data[1]))
 		self._bus.configure(phase=1,polarity=0)
 		if (len(data) == 2):
 			self._cs.value = 0
@@ -71,31 +73,19 @@ class AD5293():
 		data_LSB = val & 0xff
 		data_MSB = ((val & 0xff00) >> 8) | update_command
 		self._write([data_MSB,data_LSB])
+		self.set_val = val
+		return self.set_val
 
 	# val shall be [-1,1]
 	def set_pot(self,val):
-
-		# See data sheet page 19
-		update_command = 0x04
-		# print(val)
-		self.set_val = self._transform(val)
-		# print('digipot: '+str(val))
-
-		# Break val into 2 sets of 8bit.
-		# See data sheet page 19.
-		data_LSB = self.set_val & 0xff
-		data_MSB = ((self.set_val & 0xff00) >> 8) | update_command
-
-		# Send it.
-		self._write([data_MSB,data_LSB])
-		return self.set_val
+		return self.set_raw(self._transform(val))
 
 	# Zero out the potentiometer during object deinitialization.
 	def deinit(self):
 		for _ in range(3):
 			self.set_pot(0)
 		return 1
-			
+
 
 
 

@@ -110,8 +110,9 @@ class MAX522():
 		self._write([update_command,0x0])
 
 	def deinit(self):
-		self.set_dac_all(0)
-		self.shutdown_all()
+		for _ in range(3):
+			self.set_dac_all(0)
+			self.shutdown_all()
 		return 1
 
 

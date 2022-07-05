@@ -21,7 +21,7 @@ class LS7366():
 
 		# MDR0 settings. See page 4 of datasheet.
 		self.quad_setting = quadrature
-		self.running_mode = 0x0		# What happens when range reached
+		self.running_mode = 0x0		# What happens when max range reached
 									# 0x0 free, 0x4 single-cycle, 0x8 range-limit to DTR, 0xC use DTR as modulo
 		self.index_mode = 0x0		# What happens when Index input, pin 10, triggers.
 									# 0x0 disabled, 0x10 'LOAD CNTR', 0x20 'CLR CNTR', 0x30 'LOAD OTR'
@@ -132,28 +132,27 @@ class LS7366():
 		self._write(buffer)
 
 
-	# Function to convert unsigned bytes of length 'unsigned_l'
+	# Function to convert 'unsigned_int' of bit length 'unsigned_l'
 	# 	into a signed int using twos compliment.
-	def twos_comp(self,unsigned_int,unsigned_l = 4):
-		# Initiate first byte of each mask in string format.
-		value_mask = '0x7f'		# Every bit following the sign.
-		sign_mask = '0x80'		# Only the signed bit.
+	def twos_comp(self, unsigned_int, unsigned_l = 16):
+		# Initiate first bit of value mask in string format.
+		value_mask = '0b1'
 
-		# Iterate and append for additional bytes up to 'unsigned_l'.
-		for _ in range(unsigned_l-1):
-			value_mask += 'ff'
-			sign_mask += '00'
+		# Iterate and append for additional bit up to 'unsigned_l'.
+		#	Subtract 2, because first bit is the sign, and second bit was preloaded above.
+		for _ in range(unsigned_l-2):
+			value_mask += '1'
 
-		# Form base16 integers of the mask strings.
-		value_mask = int(value_mask,16)
-		sign_mask = int(sign_mask,16)
+		# Form integers of the mask strings.
+		value_mask = int(value_mask)
+		sign_mask = value_mask + 1
 
 		# Get the absolute value by bitwise comparing to the value_mask.
-		# Create boolean of negative (True) or positive (False) by bitwise comparing to sign_mask.
-		# If negative, subtract the sign_mask.
+		# 	Create boolean of negative (True) or positive (False) by bitwise comparing to sign_mask.
+		# 	If negative, subtract the sign_mask.
 		return (unsigned_int & value_mask) - (sign_mask * bool(unsigned_int & sign_mask))
 
-	# 
+	# Function to load CNTR register from the DTR register
 	def load_counter(self):
 		self._send_instructions('LOAD','CNTR')
 
@@ -163,11 +162,10 @@ class LS7366():
 		self._send_instructions('CLR','CNTR')
 		# self._send_instructions('LOAD','CNTR')
 
-	# Function to load a value into the counter register.
+	# Function to load a value into the CNTR register.
 	def set_counter(self,data):
 		self._send_instructions('WR','DTR',data)
 		self.load_counter()
-
 
 
 	# Datasheet page 4.
@@ -177,21 +175,18 @@ class LS7366():
 		self._send_instructions('WR','MDR0',buffer,1)
 
 	def set_quadrature(self,quadrature_pulses=4):
-		# self._send_instructions('WR','MDR0',quadrature_pulses - 1, 1)
 		self.quad_setting = quadrature_pulses
 		self._set_MDR0()
 
 	def set_free_running(self):
 		# Datasheet page 4.
 		# 	MDR0 register is 1byte (8bit) long.
-		# self._send_instructions('WR','MDR0',0x0,1)
 		self.running_mode = 0x0
 		self._set_MDR0()
 
 	def set_single_cycle(self):
 		# Datasheet page 4.
 		# 	MDR0 register is 1byte (8bit) long.
-		# self._send_instructions('WR','MDR0',0x4,1)
 		self.running_mode = 0x4
 		self._set_MDR0()
 
@@ -240,4 +235,5 @@ class LS7366():
 		return self.last_count
 
 	def deinit(self):
+		self.reset_counter()
 		return 1

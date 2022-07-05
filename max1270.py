@@ -5,30 +5,7 @@
 
 # Driver for 12bit ADC, MAX1270.
 
-from collections import OrderedDict
-from time import sleep
-
-# def tictoc(func):
-# 	def wrapper(*args):
-# 		start = monotonic_ns()
-# 		func(*args)
-# 		end = monotonic_ns()
-# 		# print(func)
-# 		print(str(func)+': '+str((end-start) / (10**9)))
-# 	return wrapper
-
-
 class MAX1270():
-	# Length of each function, for shifting purposes.
-		# Permanent and Private class variable. Static.
-	# __control_bits_l = OrderedDict([
-	# 	('START' , 1),		# 1bit;
-	# 	('SEL' , 3),		# 3bit;
-	# 	('RNG' , 1),		# 1bit;
-	# 	('BIP' , 1),		# 1bit;
-	# 	('PD' , 2),			# 2bit;
-	# ])
-
 	def __init__(self,spi_bus,chip_select):
 		# Initialize SPI.
 		self._bus = spi_bus
@@ -104,25 +81,24 @@ class MAX1270():
 		# print(read_buffer, signed_reading, scale, scaled_reading)
 		return scaled_reading
 
-	# Function to convert unsigned bytes of length 'unsigned_l'
+	# Function to convert 'unsigned_int' of bit length 'unsigned_l'
 	# 	into a signed int using twos compliment.
-	def twos_comp(self,unsigned_int,unsigned_l = 2):
-		# Initiate first byte of each mask in string format.
-		value_mask = '0x07'		# Every bit following the sign.
-		sign_mask = '0x80'		# Only the signed bit.
+	def twos_comp(self, unsigned_int, unsigned_l = 12):
+		# Initiate first bit of value mask in string format.
+		value_mask = '0b1'
 
-		# Iterate and append for additional bytes up to 'unsigned_l'.
-		for _ in range(unsigned_l-1):
-			value_mask += 'ff'
-			sign_mask += '00'
+		# Iterate and append for additional bit up to 'unsigned_l'.
+		#	Subtract 2, because first bit is the sign, and second bit was preloaded above.
+		for _ in range(unsigned_l-2):
+			value_mask += '1'
 
-		# Form base16 integers of the mask strings.
-		value_mask = int(value_mask,16)
-		sign_mask = int(sign_mask,16)
+		# Form integers of the mask strings.
+		value_mask = int(value_mask)
+		sign_mask = value_mask + 1
 
 		# Get the absolute value by bitwise comparing to the value_mask.
-		# Create boolean of negative (True) or positive (False) by bitwise comparing to sign_mask.
-		# If negative, subtract the sign_mask.
+		# 	Create boolean of negative (True) or positive (False) by bitwise comparing to sign_mask.
+		# 	If negative, subtract the sign_mask.
 		return (unsigned_int & value_mask) - (sign_mask * bool(unsigned_int & sign_mask))
 
 	def deinit(self):
