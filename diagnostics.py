@@ -1,36 +1,50 @@
 from sbc import SBC
 import adafruit_bno055
+from adafruit_bno08x.i2c import BNO08X_I2C
+from adafruit_bno08x import (
+    BNO_REPORT_ROTATION_VECTOR,
+	BNO_REPORT_GAME_ROTATION_VECTOR,
+	BNO_REPORT_ACTIVITY_CLASSIFIER,
+)
 from time import sleep
 import board
 import busio
 import atexit
 import sys
-
-
-# SPI bus
-# sclk = board.GP2
-# mosi = board.GP3
-# miso = board.GP4
-# spi = busio.SPI(sclk,MOSI=mosi,MISO=miso)
-# print('Setting up SPI bus...', end="")
-# while not spi.try_lock():
-# 	print('',end=".")
-# print("\r\n SPI bus setup complete.")
-# spi.configure(phase=0,polarity=0,baudrate=1000000)
+from math import atan2,asin,pi
+tau = 2*pi
 
 
 # I2C bus
 i2c_SDA = board.GP16
 i2c_SCL = board.GP17
 i2c_bus = busio.I2C(scl=i2c_SCL,sda=i2c_SDA)
-print('Setting up I2C bus.')
+print("Setting up I2C bus.")
 
 
 # BNO055 IMU setup
-try:
-	imu = adafruit_bno055.BNO055_I2C(i2c_bus)
-except:
-	print('BNO-055 imu not found.')
+print("\r\nLooking for BNO-055.")
+for i in range(3):
+	try:
+		imu = adafruit_bno055.BNO055_I2C(i2c_bus)
+		print(f"BNO-055 found.")
+		break
+	except:
+		print(f"BNO-055 imu not found, attempt: {i+1}.")
+
+# BNO085 IMU setup
+print("\r\nLooking for BNO-085.")
+for _ in range(3):
+	try:
+		imu = BNO08X_I2C(i2c_bus)
+		imu.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+		imu.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
+		imu.enable_feature(BNO_REPORT_ACTIVITY_CLASSIFIER)
+		print("BNO-085 found.")
+		break
+	except:
+		print("BNO-085 imu not found.")
+
 
 project = SBC(i2c=i2c_bus)
 
@@ -136,22 +150,44 @@ def test_adc_from_digipot():
 		sleep(0.1)
 
 
-while(1):
-# for _ in range(3):
-	project._adc_device.bipolar = 1
-	project._adc_device.range = 1
-	print()
-	print("encoder ch1: %0.2f" %project._enc_device1.read_counter())
-	print("Digipot (AD5293) set: %0.2f (V)" %convert_digipot_to_V(project._digipot_device.set_raw((abs(project._enc_device1.last_count) % 1024))))
-	print("ADC (MAX1270) read ch0: %0.2f (V)" %project._adc_device.read_volts(0))
-	print("DAC (MAX522) set all ch: %0.2f (V)" %(project._dac_device.set_dac_all((abs(project._enc_device1.last_count) % 256) / 256)/256 * 5))
-	print("ADC (MAX1270) read ch5: %0.2f (V)" %project._adc_device.read_volts(5))
-	print("IMU Euler angles: %s" %(imu.euler,))
-	sleep(0.4)
-	# test_adc_from_digipot()
+# BNO 085 quaternion to euler conversion for Tait–Bryan angles.
+def q_to_e(x,y,z,w):
+	conversion_factor = 360/tau	# radians to degrees.
 
-	# max522_iterate()
-	# print(test_form_control_byte())
-	# project._adc_device.power_mode = 0
-	# test_adc_from_dac()
-	# test_reform_bytes()
+	# https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles#Intuition
+	# 	w = q0, x = q1, y = q2, z = q3
+	# 	BNO 085 quaternion outputs are in a different order, placing 'w'/'q0' as the last entry.
+	# 	BNO 085 quaternion outputs are already normalized.
+	heading = - atan2(2* ((w*z) + (x*y)), 1 - 2 * ((y*y) + (z*z)) ) * conversion_factor
+	pitch = asin(-2 * (y*w) - (x*z) ) * conversion_factor
+	roll = atan2(2 * ((y * z) + (w * x)) , 1 - (2 * ( (x*x) + (y*y) ))) * conversion_factor
+
+	return heading,pitch,roll
+
+
+def run():
+	while(1):
+	# for _ in range(3):
+		project._adc_device.bipolar = 1
+		project._adc_device.range = 1
+		print()
+		print(f"encoder ch1: {project._enc_device1.read_counter():0.2f}")
+		print(f"Digipot (AD5293) set: {convert_digipot_to_V(project._digipot_device.set_raw((abs(project._enc_device1.last_count) % 1024))):0.2f} (V)" )
+		print(f"ADC (MAX1270) read ch0: {project._adc_device.read_volts(0):0.2f} (V)" )
+		print(f"DAC (MAX522) set all ch: {(project._dac_device.set_dac_all((abs(project._enc_device1.last_count) % 256) / 256)/256 * 5):0.2f} (V)")
+		print(f"ADC (MAX1270) read ch5: {project._adc_device.read_volts(5):0.2f} (V)" )
+		# print(f"BNO 55 Euler angles: {imu.euler}")
+		print(f"BNO 85 Quaternion: {q_to_e(*imu.quaternion)}")
+		print(f"BNO 85 Game Quatr: {q_to_e(*imu.game_quaternion)}")
+		imu_classification = imu.activity_classification
+		print(f"IMU activity: {imu_classification['most_likely']}, confidence {imu_classification[imu_classification['most_likely']]:0.2f}%%")
+		print()
+		print()
+		sleep(1)
+		# test_adc_from_digipot()
+
+		# max522_iterate()
+		# print(test_form_control_byte())
+		# project._adc_device.power_mode = 0
+		# test_adc_from_dac()
+		# test_reform_bytes()
