@@ -66,7 +66,7 @@ def exit_program():
 		except:
 			pass
 atexit.register(exit_program)
-
+	
 
 # Test pause and restart functionality of LS7366 encoder1
 pause_enc1 = True
