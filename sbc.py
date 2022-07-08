@@ -2,10 +2,11 @@ from ls7366 import LS7366
 from ad5293 import AD5293
 from max522 import MAX522
 from max1270 import MAX1270
+from mot import L298N
 import board
 import busio
 from digitalio import DigitalInOut, Direction
-
+import pwmio
 
 class SBC():
 	def __init__(self,i2c=0,spi=0):
@@ -22,10 +23,6 @@ class SBC():
 		self._init_digipot()	# AD5293
 		self._init_dac()		# MAX522
 		self._init_adc()		# MAX1270
-
-		# Deinit order matters. Drivers, then Buses, then Pins.
-		self.deinit_repository_drivers.extend(self.deinit_repository_buses)
-		self.deinit_repository_drivers.extend(self.deinit_repository_pins)
 
 
 	def _init_i2c(self,i2c_in):
@@ -114,8 +111,49 @@ class SBC():
 		self._adc_device = MAX1270(self._spi,self._cs5)
 		self.deinit_repository_drivers.append(self._adc_device)
 		self.deinit_repository_pins.append(self._cs5)
+	
+	def _init_mot1(self):
+		print('Initiating motor 1.')
+		self._mot1_in1 = pwmio.PWMOut(pin=board.GP15,frequency=440)
+		self._mot1_in1.duty_cycle = 0
+		self._mot1_in2 = pwmio.PWMOut(pin=board.GP14,frequency=440)
+		self._mot1_in2.duty_cycle = 0
+		self._mot1_en = DigitalInOut(board.GP13)
+		self._mot1_en.direction = Direction.OUTPUT
+		self._mot1_en.value = 0
+
+		self._mot1 = L298N(self._mot1_in1, self._mot1_in2, self._mot1_en)
+
+		self.deinit_repository_drivers.append(self._mot1)
+		self.deinit_repository_pins.extend([self._mot1_in1, self._mot1_in2, self._mot1_en])
+	
+	def _init_mot2(self):
+		print('Initiating motor 2.')
+		self._mot2_in1 = pwmio.PWMOut(pin=board.GP12,frequency=440)
+		self._mot2_in1.duty_cycle = 0
+		self._mot2_in2 = pwmio.PWMOut(pin=board.GP11,frequency=440)
+		self._mot2_in2.duty_cycle = 0
+		self._mot2_en = DigitalInOut(board.GP10)
+		self._mot2_en.direction = Direction.OUTPUT
+		self._mot2_en.value = 0
+
+		self._mot2 = L298N(self._mot2_in1, self._mot2_in2, self._mot2_en)
+
+		self.deinit_repository_drivers.append(self._mot2)
+		self.deinit_repository_pins.extend([self._mot2_in1, self._mot2_in2, self._mot2_en])
+
+	def initiate_motor(self,n):
+		func_name = '_init_mot'+str(n)
+		func = getattr(self,func_name)
+		func()
+
+
 
 	def deinit(self):
+		# Deinit order matters. Drivers, then Buses, then Pins.
+		self.deinit_repository_drivers.extend(self.deinit_repository_buses)
+		self.deinit_repository_drivers.extend(self.deinit_repository_pins)
+
 		for obj in self.deinit_repository_drivers:
 			try:
 				obj_type = type(obj)
