@@ -11,7 +11,8 @@ import board
 import busio
 import atexit
 import sys
-from math import atan2,asin,pi
+from math import atan2,asin,copysign,pi
+from random import randint
 tau = 2*pi
 
 
@@ -34,7 +35,7 @@ for i in range(3):
 
 # BNO085 IMU setup
 print("\r\nLooking for BNO-085.")
-for _ in range(3):
+for i in range(3):
 	try:
 		imu = BNO08X_I2C(i2c_bus)
 		imu.enable_feature(BNO_REPORT_ROTATION_VECTOR)
@@ -43,7 +44,7 @@ for _ in range(3):
 		print("BNO-085 found.")
 		break
 	except:
-		print("BNO-085 imu not found.")
+		print(f"BNO-085 imu not found, attempt: {i+1}.")
 
 
 project = SBC(i2c=i2c_bus)
@@ -66,7 +67,7 @@ def exit_program():
 		except:
 			pass
 atexit.register(exit_program)
-	
+
 
 # Test pause and restart functionality of LS7366 encoder1
 pause_enc1 = True
@@ -166,28 +167,60 @@ def q_to_e(x,y,z,w):
 
 
 def run():
+	project.initiate_motor(1)
+	project._adc_device.bipolar = 1
+	project._adc_device.range = 1
+	project._mot1.set_w(randint(0,100)/100)
+
+	project._mot1.min_bias = 0.07
+	print(project._mot1._min_bias)
+	# while(1):
+	n = 10
 	while(1):
-	# for _ in range(3):
-		project._adc_device.bipolar = 1
-		project._adc_device.range = 1
+		for i in range(n*2):
+		# for _ in range(3):
+			print()
+			last_last_count = project._enc_device1.last_count
+			print(f"encoder ch1: {project._enc_device1.read_counter():0.2f}")
+			print(f"Digipot (AD5293) set: {convert_digipot_to_V(project._digipot_device.set_raw((abs(project._enc_device1.last_count) % 1024))):0.2f} (V)" )
+			print(f"ADC (MAX1270) read ch0: {project._adc_device.read_volts(0):0.2f} (V)" )
+			print(f"DAC (MAX522) set all ch: {(project._dac_device.set_dac_all((abs(project._enc_device1.last_count) % 256) / 256)/256 * 5):0.2f} (V)")
+			print(f"ADC (MAX1270) read ch5: {project._adc_device.read_volts(5):0.2f} (V)" )
+			# print(f"BNO 55 Euler angles: {imu.euler}")
+			print(f"BNO 85 Quaternion: {q_to_e(*imu.quaternion)}")
+			print(f"BNO 85 Game Quatr: {q_to_e(*imu.game_quaternion)}")
+			imu_classification = imu.activity_classification
+			print(f"IMU activity: {imu_classification['most_likely']}, confidence {imu_classification[imu_classification['most_likely']]:0.2f}%%")
+			
+			# dcount = project._enc_device1.last_count-last_last_count
+			# last_mot = project._mot1.set_w( project._enc_device1.last_count / 32768 )
+			# print(f"Mot1 set: {last_mot}")
+			# if (abs(last_mot) < min_bias):
+			# 	project._mot1.set_w(copysign(min_bias,last_mot))
+			# 	# sleep(1)
+			# 	print(f"encoder ch1: {project._enc_device1.read_counter():0.2f}",i)
+
+			# looking for min bias necessary to drive motor
+			# project._mot1.set_w(i/(n*2))
+
+			# Sweep full range
+			print(f"motor: {project._mot1.set_w((i-n)/(3*n))}")
+			sleep(0.3)
+			# test_adc_from_digipot()
+
+			# max522_iterate()
+			# print(test_form_control_byte())
+			# project._adc_device.power_mode = 0
+			# test_adc_from_dac()
+			# test_reform_bytes()
 		print()
 		print(f"encoder ch1: {project._enc_device1.read_counter():0.2f}")
-		print(f"Digipot (AD5293) set: {convert_digipot_to_V(project._digipot_device.set_raw((abs(project._enc_device1.last_count) % 1024))):0.2f} (V)" )
-		print(f"ADC (MAX1270) read ch0: {project._adc_device.read_volts(0):0.2f} (V)" )
-		print(f"DAC (MAX522) set all ch: {(project._dac_device.set_dac_all((abs(project._enc_device1.last_count) % 256) / 256)/256 * 5):0.2f} (V)")
-		print(f"ADC (MAX1270) read ch5: {project._adc_device.read_volts(5):0.2f} (V)" )
-		# print(f"BNO 55 Euler angles: {imu.euler}")
-		print(f"BNO 85 Quaternion: {q_to_e(*imu.quaternion)}")
-		print(f"BNO 85 Game Quatr: {q_to_e(*imu.game_quaternion)}")
-		imu_classification = imu.activity_classification
-		print(f"IMU activity: {imu_classification['most_likely']}, confidence {imu_classification[imu_classification['most_likely']]:0.2f}%%")
+		print(f"motor brake: {project._mot1.brake()}")
+		sleep(5)
+		print(f"encoder ch1: {project._enc_device1.read_counter():0.2f}")
+		print(f"motor freespin: {project._mot1.free_spin()}")
+		sleep(5)
+		print(f"encoder ch1: {project._enc_device1.read_counter():0.2f}")
 		print()
-		print()
-		sleep(1)
-		# test_adc_from_digipot()
 
-		# max522_iterate()
-		# print(test_form_control_byte())
-		# project._adc_device.power_mode = 0
-		# test_adc_from_dac()
-		# test_reform_bytes()
+
