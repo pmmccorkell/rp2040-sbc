@@ -5,17 +5,6 @@
 
 from math import copysign
 
-# Motor 1
-# gp15	p24		in1
-# gp14	p25		in2
-# gp13	p26		en
-
-# Motor 2
-# gp12	p21		in1
-# gp11	p22		in2
-# gp10	p23		en
-
-
 class L298N():
 	def __init__(self,in1,in2,en):
 		self._in1 = in1
@@ -73,5 +62,16 @@ class L298N():
 		for _ in range(3):
 			self.off()
 		return 1
+
+
+# Motor 1
+# gp15	p24		in1
+# gp14	p25		in2
+# gp13	p26		en
+
+# Motor 2
+# gp12	p21		in1
+# gp11	p22		in2
+# gp10	p23		en
 
 
