@@ -2,7 +2,7 @@ from ls7366 import LS7366
 from ad5293 import AD5293
 from max522 import MAX522
 from max1270 import MAX1270
-from mot import L298N
+from mot import L298N_pwm, L298N_dig
 import board
 import busio
 from digitalio import DigitalInOut, Direction
@@ -112,8 +112,8 @@ class SBC():
 		self.deinit_repository_drivers.append(self._adc_device)
 		self.deinit_repository_pins.append(self._cs5)
 	
-	def _init_mot1(self):
-		print('Initiating motor 1.')
+	def _init_mot1_pwm(self):
+		print('Initiating motor 1 pwm.')
 		self._mot1_in1 = pwmio.PWMOut(pin=board.GP15,frequency=440)
 		self._mot1_in1.duty_cycle = 0
 		self._mot1_in2 = pwmio.PWMOut(pin=board.GP14,frequency=440)
@@ -122,13 +122,13 @@ class SBC():
 		self._mot1_en.direction = Direction.OUTPUT
 		self._mot1_en.value = 0
 
-		self._mot1 = L298N(self._mot1_in1, self._mot1_in2, self._mot1_en)
+		self._mot1 = L298N_pwm(self._mot1_in1, self._mot1_in2, self._mot1_en)
 
 		self.deinit_repository_drivers.append(self._mot1)
 		self.deinit_repository_pins.extend([self._mot1_in1, self._mot1_in2, self._mot1_en])
 	
-	def _init_mot2(self):
-		print('Initiating motor 2.')
+	def _init_mot2_pwm(self):
+		print('Initiating motor 2 pwm.')
 		self._mot2_in1 = pwmio.PWMOut(pin=board.GP12,frequency=440)
 		self._mot2_in1.duty_cycle = 0
 		self._mot2_in2 = pwmio.PWMOut(pin=board.GP11,frequency=440)
@@ -137,13 +137,46 @@ class SBC():
 		self._mot2_en.direction = Direction.OUTPUT
 		self._mot2_en.value = 0
 
-		self._mot2 = L298N(self._mot2_in1, self._mot2_in2, self._mot2_en)
+		self._mot2 = L298N_pwm(self._mot2_in1, self._mot2_in2, self._mot2_en)
 
 		self.deinit_repository_drivers.append(self._mot2)
 		self.deinit_repository_pins.extend([self._mot2_in1, self._mot2_in2, self._mot2_en])
 
-	def initiate_motor(self,n):
-		func_name = '_init_mot'+str(n)
+	def _init_mot1_dig(self):
+		print('Initiating motor 1 digital.')
+		self._mot1_in1 = DigitalInOut(board.GP15)
+		self._mot1_in1.direction = Direction.OUTPUT
+		self._mot1_in1.value = 0
+		self._mot1_in2 = DigitalInOut(board.GP14)
+		self._mot1_in2.direction = Direction.OUTPUT
+		self._mot1_in2.value = 0
+		self._mot1_en = pwmio.PWMOut(pin=board.GP13,frequency=440)
+		self._mot1_en.duty_cycle = 0
+
+		self._mot1 = L298N_dig(self._mot1_in1, self._mot1_in2, self._mot1_en)
+
+		self.deinit_repository_drivers.append(self._mot1)
+		self.deinit_repository_pins.extend([self._mot1_in1, self._mot1_in2, self._mot1_en])
+	
+	def _init_mot2_dig(self):
+		print('Initiating motor 2 digital.')
+		self._mot2_in1 = DigitalInOut(board.GP12)
+		self._mot2_in1.direction = Direction.OUTPUT
+		self._mot2_in1.value = 0
+		self._mot2_in2 = DigitalInOut(board.GP11)
+		self._mot2_in2.direction = Direction.OUTPUT
+		self._mot2_in2.value = 0
+		self._mot2_en = pwmio.PWMOut(pin=board.GP10,frequency=440)
+		self._mot2_en.duty_cycle = 0
+
+		self._mot2 = L298N_dig(self._mot2_in1, self._mot2_in2, self._mot2_en)
+
+		self.deinit_repository_drivers.append(self._mot2)
+		self.deinit_repository_pins.extend([self._mot2_in1, self._mot2_in2, self._mot2_en])
+
+
+	def initiate_motor(self,n,type='dig'):
+		func_name = '_init_mot'+str(n)+'_'+str(type)
 		func = getattr(self,func_name)
 		func()
 
