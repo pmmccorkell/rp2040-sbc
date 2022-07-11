@@ -167,17 +167,17 @@ def q_to_e(x,y,z,w):
 
 
 def run():
-	project.initiate_motor(1)
+	project.initiate_motor(1,'dig')
 	project._adc_device.bipolar = 1
 	project._adc_device.range = 1
 	project._mot1.set_w(randint(0,100)/100)
 
-	project._mot1.min_bias = 0.07
+	project._mot1.min_bias = 0.08
 	print(project._mot1._min_bias)
 	# while(1):
-	n = 10
+	n = 1024
 	while(1):
-		for i in range(n*2):
+		for i in range(2*n):
 		# for _ in range(3):
 			print()
 			last_last_count = project._enc_device1.last_count
@@ -191,7 +191,7 @@ def run():
 			print(f"BNO 85 Game Quatr: {q_to_e(*imu.game_quaternion)}")
 			imu_classification = imu.activity_classification
 			print(f"IMU activity: {imu_classification['most_likely']}, confidence {imu_classification[imu_classification['most_likely']]:0.2f}%%")
-			
+
 			# dcount = project._enc_device1.last_count-last_last_count
 			# last_mot = project._mot1.set_w( project._enc_device1.last_count / 32768 )
 			# print(f"Mot1 set: {last_mot}")
@@ -204,8 +204,11 @@ def run():
 			# project._mot1.set_w(i/(n*2))
 
 			# Sweep full range
-			print(f"motor: {project._mot1.set_w((i-n)/(3*n))}")
-			sleep(0.3)
+			# print(f"motor: {project._mot1.set_w((i-n)/(3*n))}")
+			print(f"motor: {project._mot1.set_w(randint(-256,256)/256)}")
+			# print(f"motor: {project._mot1.set_w(i/(2*n))}, i: {i/(2*n)}")
+
+			sleep(0.1)
 			# test_adc_from_digipot()
 
 			# max522_iterate()
