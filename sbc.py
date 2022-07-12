@@ -154,7 +154,7 @@ class SBC():
 		self._mot1_en.duty_cycle = 0
 
 		self._mot1 = L298N_dig(self._mot1_in1, self._mot1_in2, self._mot1_en)
-
+	
 		self.deinit_repository_drivers.append(self._mot1)
 		self.deinit_repository_pins.extend([self._mot1_in1, self._mot1_in2, self._mot1_en])
 	
