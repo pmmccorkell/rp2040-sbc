@@ -13,6 +13,8 @@ class MAX1270():
 		self._cs.value = 1
 
 		self._init_max1270()
+		self._default_channel = 0
+
 
 
 	def _form_control_byte(self,channel=0):
@@ -72,7 +74,22 @@ class MAX1270():
 		# Convert the unsigned integer to a signed int using twos compliment.
 		return buffer_int
 
+	@property
+	def value(self):
+		# print(f"value, default ch: {self.default_channel}")
+		return self.read_volts(self.default_channel)
+
+	@property
+	def default_channel(self):
+		return self._default_channel
+	
+	@default_channel.setter
+	def default_channel(self,val):
+		# print(f"setter: {val}")
+		self._default_channel = val
+
 	def read_volts(self,channel):
+		# print(f"read_volts ch: {channel}")
 		read_buffer = self._read(channel)
 		signed_reading = (self.bipolar * self.twos_comp(read_buffer)) + ((not self.bipolar) * read_buffer)
 		scale = 0x1000/(1+self.bipolar)
