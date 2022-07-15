@@ -77,26 +77,37 @@ class MAX1270():
 	@property
 	def value(self):
 		# print(f"value, default ch: {self.default_channel}")
+		# return self.read_volts(self.default_channel)
+		return self.read(self.default_channel)
+
+	@property
+	def volts(self):
 		return self.read_volts(self.default_channel)
 
 	@property
 	def default_channel(self):
 		return self._default_channel
-	
+
 	@default_channel.setter
 	def default_channel(self,val):
 		# print(f"setter: {val}")
 		self._default_channel = val
 
-	def read_volts(self,channel):
+	# Reads ADC channel, normalized to [-1,1]
+	def read(self,channel):
 		# print(f"read_volts ch: {channel}")
 		read_buffer = self._read(channel)
 		signed_reading = (self.bipolar * self.twos_comp(read_buffer)) + ((not self.bipolar) * read_buffer)
 		scale = 0x1000/(1+self.bipolar)
-		scaled_reading = signed_reading/scale * ((self.range * 10) + ((not self.range) * 5))
+		scaled_reading = signed_reading/scale
 		self.last_values[channel] = scaled_reading
 		# print(read_buffer, signed_reading, scale, scaled_reading)
 		return scaled_reading
+
+	# Converts normalized [-1,1] reading to Volts.
+	def read_volts(self,channel):
+		voltage = self.read(channel) * ((self.range * 10) + ((not self.range) * 5))
+		return voltage
 
 	# Function to convert 'unsigned_int' of bit length 'unsigned_l'
 	# 	into a signed int using twos compliment.
