@@ -111,7 +111,7 @@ class SBC():
 		self._adc_device = MAX1270(self._spi,self._cs5)
 		self.deinit_repository_drivers.append(self._adc_device)
 		self.deinit_repository_pins.append(self._cs5)
-	
+
 	def _init_mot1_pwm(self):
 		print('Initiating motor 1 pwm.')
 		self._mot1_in1 = pwmio.PWMOut(pin=board.GP15,frequency=440)
@@ -126,7 +126,7 @@ class SBC():
 
 		self.deinit_repository_drivers.append(self._mot1)
 		self.deinit_repository_pins.extend([self._mot1_in1, self._mot1_in2, self._mot1_en])
-	
+
 	def _init_mot2_pwm(self):
 		print('Initiating motor 2 pwm.')
 		self._mot2_in1 = pwmio.PWMOut(pin=board.GP12,frequency=440)
@@ -154,10 +154,10 @@ class SBC():
 		self._mot1_en.duty_cycle = 0
 
 		self._mot1 = L298N_dig(self._mot1_in1, self._mot1_in2, self._mot1_en)
-	
+
 		self.deinit_repository_drivers.append(self._mot1)
 		self.deinit_repository_pins.extend([self._mot1_in1, self._mot1_in2, self._mot1_en])
-	
+
 	def _init_mot2_dig(self):
 		print('Initiating motor 2 digital.')
 		self._mot2_in1 = DigitalInOut(board.GP12)
@@ -180,7 +180,8 @@ class SBC():
 		func = getattr(self,func_name)
 		func()
 
-
+	def read_adc(self,ch=0):
+		return self._adc_device.read_volts(ch)
 
 	def deinit(self):
 		# Deinit order matters. Drivers, then Buses, then Pins.
