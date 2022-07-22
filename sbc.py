@@ -8,6 +8,17 @@ import busio
 from digitalio import DigitalInOut, Direction
 import pwmio
 
+
+import board
+import displayio
+import terminalio
+from adafruit_display_text import bitmap_label, label
+from adafruit_displayio_sh1107 import SH1107
+from adafruit_displayio_sh1107 import DISPLAY_OFFSET_ADAFRUIT_128x128_OLED_5297 as SH1107_OFFSET
+
+
+
+
 class SBC():
 	def __init__(self,i2c=0,spi=0):
 
@@ -23,9 +34,11 @@ class SBC():
 		self._init_digipot()	# AD5293
 		self._init_dac()		# MAX522
 		self._init_adc()		# MAX1270
+		# self._init_display()	# SH1107 OLED, 128x128, Monochrome
 
 
 	def _init_i2c(self,i2c_in):
+		displayio.release_displays()
 		if (str(type(i2c_in)) == "<class 'I2C'>"):
 			self._i2c = i2c_in
 			print("External I2C detected.")
@@ -174,6 +187,33 @@ class SBC():
 		self.deinit_repository_drivers.append(self._mot2)
 		self.deinit_repository_pins.extend([self._mot2_in1, self._mot2_in2, self._mot2_en])
 
+	def _init_display(self):
+		displayio.release_displays()
+		display_bus = displayio.I2CDisplay(self._i2c, device_address=0x3D)
+		WIDTH = 128
+		HEIGHT = 128
+		ROTATION = 90
+		# BORDER = 2
+		self._display = SH1107(
+			display_bus,
+			width=WIDTH,
+			height=HEIGHT,
+			display_offset=SH1107_OFFSET,
+			rotation=ROTATION,
+		)
+
+		# splash = displayio.Group()
+		# self._display.show(splash)
+		# self.oled_text('startup')
+
+	# def oled_text(self,text_in=("Hellow"+__name__)):
+	# 	text_area = label.Label(terminalio.FONT,text=text_in)
+	# 	text_area.x = 10
+	# 	text_area.y = 10
+	# 	self._display.show(text_area)
+
+	def clear_display(self):
+		displayio.release_displays()
 
 	def initiate_motor(self,n,type='dig'):
 		func_name = '_init_mot'+str(n)+'_'+str(type)
@@ -187,7 +227,7 @@ class SBC():
 		# Deinit order matters. Drivers, then Buses, then Pins.
 		self.deinit_repository_drivers.extend(self.deinit_repository_buses)
 		self.deinit_repository_drivers.extend(self.deinit_repository_pins)
-
+		displayio.release_displays()
 		for obj in self.deinit_repository_drivers:
 			try:
 				obj_type = type(obj)
