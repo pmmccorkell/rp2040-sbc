@@ -11,8 +11,8 @@ import pwmio
 
 import board
 import displayio
-import terminalio
-from adafruit_display_text import bitmap_label, label
+# import terminalio
+# from adafruit_display_text import bitmap_label, label
 from adafruit_displayio_sh1107 import SH1107
 from adafruit_displayio_sh1107 import DISPLAY_OFFSET_ADAFRUIT_128x128_OLED_5297 as SH1107_OFFSET
 
@@ -27,6 +27,7 @@ class SBC():
 		self.deinit_repository_pins = []
 
 		self._init_i2c(i2c)
+		self._init_display()	# SH1107 OLED, 128x128, Monochrome
 		self._init_spi(spi)
 
 		self._init_encoder1()	# LS7366 #1
@@ -34,7 +35,6 @@ class SBC():
 		self._init_digipot()	# AD5293
 		self._init_dac()		# MAX522
 		self._init_adc()		# MAX1270
-		# self._init_display()	# SH1107 OLED, 128x128, Monochrome
 
 
 	def _init_i2c(self,i2c_in):
@@ -52,11 +52,16 @@ class SBC():
 		print("SBC Class initializing I2C.")
 		self._sda = board.GP16
 		self._scl = board.GP17
-		self._i2c = busio.I2C(scl=self._scl,sda=self._sda)
+		try:
+			self._i2c = busio.I2C(scl=self._scl,sda=self._sda,frequency=1000000)
+			print("I2C bus setup complete.")
+		except ValueError:
+			print("\r\nI2C still locked from previous session. Hard resetting board.\r\n\r\n\r\n")
+			import microcontroller
+			microcontroller.reset()
 
 		self.deinit_repository_pins.extend([self._sda,self._scl])
 		self.deinit_repository_buses.append(self._i2c)
-		print("I2C bus setup complete.")
 
 
 	def _init_spi(self,spi_in):
@@ -79,11 +84,16 @@ class SBC():
 		self._sclk = board.GP2
 		self._mosi = board.GP3
 		self._miso = board.GP4
-		self._spi = busio.SPI(self._sclk,MOSI=self._mosi,MISO=self._miso)
+		try:
+			self._spi = busio.SPI(self._sclk,MOSI=self._mosi,MISO=self._miso)
+			print("SPI bus setup complete.")
+		except ValueError:
+			print("\r\nSPI bus still locked from previous session. Hard resetting board.\r\n\r\n\r\n")
+			import microcontroller
+			microcontroller.reset()
 
 		self.deinit_repository_pins.extend([self._sclk,self._mosi,self._miso])
 		self.deinit_repository_buses.append(self._spi)
-		print("SPI bus setup complete.")
 
 	def	_init_encoder1(self):	# LS7366 #1
 		self._cs1 = DigitalInOut(board.GP19)
@@ -189,13 +199,14 @@ class SBC():
 
 	def _init_display(self):
 		displayio.release_displays()
-		display_bus = displayio.I2CDisplay(self._i2c, device_address=0x3D)
+		self.display_bus = displayio.I2CDisplay(self._i2c, device_address=0x3D)
+		# self.deinit_repository_buses.append(self.display_bus)
 		WIDTH = 128
 		HEIGHT = 128
 		ROTATION = 90
 		# BORDER = 2
 		self._display = SH1107(
-			display_bus,
+			self.display_bus,
 			width=WIDTH,
 			height=HEIGHT,
 			display_offset=SH1107_OFFSET,
@@ -213,6 +224,7 @@ class SBC():
 	# 	self._display.show(text_area)
 
 	def clear_display(self):
+		self._i2c.unlock()
 		displayio.release_displays()
 
 	def initiate_motor(self,n,type='dig'):
@@ -227,6 +239,7 @@ class SBC():
 		# Deinit order matters. Drivers, then Buses, then Pins.
 		self.deinit_repository_drivers.extend(self.deinit_repository_buses)
 		self.deinit_repository_drivers.extend(self.deinit_repository_pins)
+		self._i2c.unlock()
 		displayio.release_displays()
 		for obj in self.deinit_repository_drivers:
 			try:
@@ -234,7 +247,8 @@ class SBC():
 				obj.deinit()
 				print('deinitialized %s of type %s.' %(obj,obj_type))
 			except:
-				pass
+				print('FAILED deinitialized %s of type %s.' %(obj,obj_type))
+				# pass 
 
 
 
