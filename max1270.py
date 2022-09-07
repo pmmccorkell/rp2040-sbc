@@ -16,7 +16,6 @@ class MAX1270():
 		self._default_channel = 0
 
 
-
 	def _form_control_byte(self,channel=0):
 		control_byte = 0x80 + (channel << 4) + (self.range << 3) + (self.bipolar << 2) + self.power_mode
 		
@@ -74,6 +73,11 @@ class MAX1270():
 		# Convert the unsigned integer to a signed int using twos compliment.
 		return buffer_int
 
+	# Clamp chan to [0,7]
+	# @tictoc
+	def _clamp_ch(self,chan):
+		return min(max(chan,0),7)
+
 	@property
 	def value(self):
 		# print(f"value, default ch: {self.default_channel}")
@@ -91,11 +95,15 @@ class MAX1270():
 	@default_channel.setter
 	def default_channel(self,val):
 		# print(f"setter: {val}")
-		self._default_channel = val
+		self._default_channel = self._clamp_ch(val)
 
 	# Reads ADC channel, normalized to [-1,1]
-	def read(self,channel):
+	def read(self,channel=False):
 		# print(f"read_volts ch: {channel}")
+		if not channel:
+			channel = self._default_channel
+		else:
+			channel = self._clamp_ch(channel)
 		read_buffer = self._read(channel)
 		signed_reading = (self.bipolar * self.twos_comp(read_buffer)) + ((not self.bipolar) * read_buffer)
 		scale = 0x1000/(1+self.bipolar)
@@ -105,7 +113,7 @@ class MAX1270():
 		return scaled_reading
 
 	# Converts normalized [-1,1] reading to Volts.
-	def read_volts(self,channel):
+	def read_volts(self,channel=False):
 		voltage = self.read(channel) * ((self.range * 10) + ((not self.range) * 5))
 		return voltage
 

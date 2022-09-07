@@ -76,6 +76,8 @@ class L298N_dig():
 			self._pwm = en
 			self.brake_enable = True
 		else:
+			print("L298N_dig class entering 2pin mode.")
+			print("Good luck and godspeed ('-')7")
 			self._dir1 = DummyPin()
 			self._pwm = in1
 			self.brake_enable = False

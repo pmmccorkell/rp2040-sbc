@@ -226,9 +226,9 @@ class SBC():
 	# 	text_area.y = 10
 	# 	self._display.show(text_area)
 
-	def clear_display(self):
-		self._i2c.unlock()
-		displayio.release_displays()
+	# def clear_display(self):
+	# 	self._i2c.unlock()
+	# 	displayio.release_displays()
 
 	def initiate_motor(self,n,type='dig'):
 		func_name = '_init_mot'+str(n)+'_'+str(type)
