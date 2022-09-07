@@ -23,7 +23,7 @@ Examples and various testing functions in diagnostics.py
 
 ## Motors:<br/>
 	Must be instantiated by user.
-	Returns lab.mot1 or lab.mot2
+	Returns lab._mot1 or lab._mot2
 
 	use motors with in1 / in2 as pwm, and en digital
 		lab._init_mot1_pwm()
@@ -39,12 +39,12 @@ Examples and various testing functions in diagnostics.py
 
 
 	Examples using mot1:
-		lab.mot1.min_bias = x	# DC bias, where x is [-1,1]; default to 0
-		lab.mot1.off()		# disable en
-		lab.mot1.free_spin()	# free spin
-		lab.mot1.brake()	# brake
-		lab.mot1.set_w(speed)	# where 'speed' is [-1,1]; default to 0
-		lab.mot1.last_w		# returns last speed set.
+		lab._mot1.min_bias = x	# DC bias, where x is [-1,1]; default to 0
+		lab._mot1.off()		# disable en
+		lab._mot1.free_spin()	# free spin
+		lab._mot1.brake()	# brake
+		lab._mot1.set_w(speed)	# where 'speed' is [-1,1]; default to 0
+		lab._mot1.last_w		# returns last speed set.
 
 ## AD5293 Digital Pot:<br/>
 	Insantiated automatically by SBC class:
