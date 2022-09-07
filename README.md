@@ -1,5 +1,6 @@
-# rp2040-sbc
 # RP2040 Single Board Computer
+
+Examples and various testing functions in diagnostics.py
 
 ## Instantiate SBC:<br/>
 	from sbc import SBC
