@@ -25,16 +25,18 @@
 		lab._init_mot1_dig()
 		lab._init_mot2_dig()
 
-		* Can also be used in 2pin mode with in1 (pwm) and in2 (digital) by instantiating directly through L298N_dig class in mot.py; PWMOut and DigitalOut must be established externally and passed in.
+		* Can also be used in 2pin mode with in1 (pwm) and in2 (digital) by
+		instantiating directly through L298N_dig class in mot.py.
+		PWMOut and DigitalOut must be established externally and passed in.
 
 
 	Examples using mot1:
 		lab.mot1.min_bias = x	# DC bias, where x is [-1,1]; default to 0
-		lab.mot1.off()			# disable en
+		lab.mot1.off()		# disable en
 		lab.mot1.free_spin()	# free spin
-		lab.mot1.brake()		# brake
+		lab.mot1.brake()	# brake
 		lab.mot1.set_w(speed)	# where 'speed' is [-1,1]; default to 0
-		lab.mot1.last_w			# returns last speed set.
+		lab.mot1.last_w		# returns last speed set.
 
 ## AD5293 Digital Pot:<br/>
 	Insantiated automatically by SBC class:
@@ -57,7 +59,7 @@
 		lab._dac_device.shutdown_all()		# Shutdown both channels
 		lab._dac_device.shutdown_A()		# Shutdown chA
 		lab._dac_device.shutdown_B()		# Shutdown chB
-		lab._dac_device.activate()			# Turn it all back on after shutdown
+		lab._dac_device.activate()		# Turn it all back on after shutdown
 
 ## MAX1270 Analog to Digital:
 	Insantiated automatically by SBC class:
@@ -67,13 +69,13 @@
 		'channel' in the following examples shall be [0,7]; default channel 0
 
 		lab._adc_device.default_channel = channel	# Set a default channel; default 0
-		lab._adc_device.bipolar	= 0			# 0 unipolar, 1 bipolar; default 0
-		lab._adc_device.range = 0			# 0 5V range, 1 10V range; default 0
+		lab._adc_device.bipolar	= 0		# 0 unipolar, 1 bipolar; default 0
+		lab._adc_device.range = 0		# 0 5V range, 1 10V range; default 0
 		lab._adc_device.read(channel)		# Returns reading as normalized [-1,1]
 		lab._adc_device.read_volts(channel)	# Returns reading in Volts
-		lab._adc_device.last_values			# Returns dictionary of the last reading on
-												each channel; normalized [-1,1]
-												ie last_values[0] for ch0
+		lab._adc_device.last_values		# Returns dictionary of the last reading on
+								each channel; normalized [-1,1]
+								ie last_values[0] for ch0
 
 
 ## LS7366 encoder counters 1 and 2:
@@ -82,8 +84,8 @@
 		lab._enc_device2
 
 	Examples using encoder 1:
-		lab._enc_device1.read_counter()	# Pull latest count from the device
-		lab._enc_device1.last_count		# Returns the last count (does not initiate a new read)
+		lab._enc_device1.read_counter()		# Pull latest count from the device
+		lab._enc_device1.last_count		# Returns the last count
 		lab._enc_device1.pause()		# Pause encoder counting
 		lab._enc_device1.resume()		# Resume encoder counting
 
