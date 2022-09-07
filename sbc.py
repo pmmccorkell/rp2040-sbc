@@ -27,7 +27,8 @@ class SBC():
 		self.deinit_repository_pins = []
 
 		self._init_i2c(i2c)
-		self._init_display()	# SH1107 OLED, 128x128, Monochrome
+		if self._i2c:
+			self._init_display()	# SH1107 OLED, 128x128, Monochrome
 		self._init_spi(spi)
 
 		self._init_encoder1()	# LS7366 #1
@@ -52,16 +53,18 @@ class SBC():
 		print("SBC Class initializing I2C.")
 		self._sda = board.GP16
 		self._scl = board.GP17
+		self._i2c = 0
 		try:
 			self._i2c = busio.I2C(scl=self._scl,sda=self._sda,frequency=1000000)
+			self.deinit_repository_buses.append(self._i2c)
 			print("I2C bus setup complete.")
 		except ValueError:
 			print("\r\nI2C still locked from previous session. Hard resetting board.\r\n\r\n\r\n")
 			import microcontroller
 			microcontroller.reset()
-
+		except RuntimeError:
+			print("\r\nNo valid I2C bus found.")
 		self.deinit_repository_pins.extend([self._sda,self._scl])
-		self.deinit_repository_buses.append(self._i2c)
 
 
 	def _init_spi(self,spi_in):
