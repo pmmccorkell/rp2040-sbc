@@ -1,19 +1,19 @@
 # rp2040-sbc
-RP2040 Single Board Computer
+# RP2040 Single Board Computer
 
-Instantiate SBC:
+## Instantiate SBC:<br/>
 	from sbc import SBC
 	lab = SBC()
 	or
 	lab = SBC(i2c = i2c_bus)
 
-	*	either pass a i2c bus, or SBC class will start its own i2c bus on GP16 and GP17
+	* either pass a i2c bus, or SBC class will start its own i2c bus on GP16 and GP17
 
-Teardown SBC:
+## Teardown SBC:<br/>
 	lab.deinit()
 
 
-Motors:
+## Motors:<br/>
 	Must be instantiated by user.
 	Returns lab.mot1 or lab.mot2
 
@@ -36,7 +36,7 @@ Motors:
 		lab.mot1.set_w(speed)	# where 'speed' is [-1,1]; default to 0
 		lab.mot1.last_w			# returns last speed set.
 
-AD5293 Digital Pot:
+## AD5293 Digital Pot:<br/>
 	Insantiated automatically by SBC class:
 		lab._digipot_device
 	
@@ -44,7 +44,7 @@ AD5293 Digital Pot:
 		lab._digipot_device.set_pot(val)	# Set digital pot, val [-1,1]
 
 
-MAX522 Digital to Analog:
+## MAX522 Digital to Analog:
 	Insantiated automatically by SBC class:
 		lab._dac_device
 
@@ -59,7 +59,7 @@ MAX522 Digital to Analog:
 		lab._dac_device.shutdown_B()		# Shutdown chB
 		lab._dac_device.activate()			# Turn it all back on after shutdown
 
-MAX1270 Analog to Digital:
+## MAX1270 Analog to Digital:
 	Insantiated automatically by SBC class:
 		lab._adc_device
 	
@@ -76,7 +76,7 @@ MAX1270 Analog to Digital:
 												ie last_values[0] for ch0
 
 
-LS7366 encoder counters 1 and 2:
+## LS7366 encoder counters 1 and 2:
 	Insantiated automatically by SBC class:
 		lab._enc_device1
 		lab._enc_device2
@@ -87,9 +87,11 @@ LS7366 encoder counters 1 and 2:
 		lab._enc_device1.pause()		# Pause encoder counting
 		lab._enc_device1.resume()		# Resume encoder counting
 
-		* There is significantly more functionality available on this device. Count range. How to handle rollover. Half / Full Quadrature.
+		* There is significantly more functionality available on this device.
+		Count range. How to handle rollover. Half / Full Quadrature.
 		And more!
-		These are all implemented in the LS7366 class, but their explanation is beyond the scope of this quick setup guide. Check comments in the LS7366 class and datasheet.
+		These are all implemented in the LS7366 class, but their explanation is beyond
+		the scope of this quick setup guide. Check comments in the LS7366 class and datasheet.
 
 
 
