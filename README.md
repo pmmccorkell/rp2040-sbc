@@ -44,7 +44,7 @@ Examples and various testing functions in diagnostics.py
 		lab._mot1.free_spin()	# free spin
 		lab._mot1.brake()	# brake
 		lab._mot1.set_w(speed)	# where 'speed' is [-1,1]; default to 0
-		lab._mot1.last_w		# returns last speed set.
+		lab._mot1.last_w	# returns last speed set.
 
 ## AD5293 Digital Pot:<br/>
 	Insantiated automatically by SBC class:
@@ -74,13 +74,13 @@ Examples and various testing functions in diagnostics.py
 		lab._adc_device
 	
 	Examples:
-		'channel' in the following examples shall be [0,7]; default channel 0
+		'ch' in the following examples shall be [0,7]; defaults to 0
 
-		lab._adc_device.default_channel = channel	# Set a default channel; default 0
+		lab._adc_device.default_channel = ch	# Set a default channel; default 0
 		lab._adc_device.bipolar	= 0		# 0 unipolar, 1 bipolar; default 0
 		lab._adc_device.range = 0		# 0 5V range, 1 10V range; default 0
-		lab._adc_device.read(channel)		# Returns reading as normalized [-1,1]
-		lab._adc_device.read_volts(channel)	# Returns reading in Volts
+		lab._adc_device.read(ch)		# Returns reading as normalized [-1,1]
+		lab._adc_device.read_volts(ch)		# Returns reading in Volts
 		lab._adc_device.last_values		# Returns dictionary of the last reading on
 								each channel; normalized [-1,1]
 								ie last_values[0] for ch0
