@@ -35,7 +35,7 @@ Examples and various testing functions in diagnostics.py
 
 		* Can also be used in 2pin mode with in1 (pwm) and in2 (digital) by
 		instantiating directly through L298N_dig class in mot.py.
-		PWMOut and DigitalOut must be established externally and passed in.
+		PWMOut and DigitalInOut must be established externally and passed in.
 
 
 	Examples using mot1:
