@@ -12,7 +12,14 @@ Examples and various testing functions in diagnostics.py
 
 ## Teardown SBC:<br/>
 	lab.deinit()
+	
+	VERY STRONGLY SUGGESTED TO IMPLEMENT:
+	import atexit
+	def exit_program():
+		lab.deinit()
+	atexit.register(exit_program)
 
+	If you don't do this, you may have an interesting time.
 
 ## Motors:<br/>
 	Must be instantiated by user.
