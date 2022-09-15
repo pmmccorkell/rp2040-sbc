@@ -47,7 +47,7 @@ Examples and various testing functions in diagnostics.py
 		lab._mot1.last_w	# returns last speed set.
 
 ## AD5293 Digital Pot:<br/>
-	Insantiated automatically by SBC class:
+	Instantiated automatically by SBC class:
 		lab._digipot_device
 	
 	Examples:
@@ -55,7 +55,7 @@ Examples and various testing functions in diagnostics.py
 
 
 ## MAX522 Digital to Analog:
-	Insantiated automatically by SBC class:
+	Instantiated automatically by SBC class:
 		lab._dac_device
 
 	Examples:
@@ -70,7 +70,7 @@ Examples and various testing functions in diagnostics.py
 		lab._dac_device.activate()		# Turn it all back on after shutdown
 
 ## MAX1270 Analog to Digital:
-	Insantiated automatically by SBC class:
+	Instantiated automatically by SBC class:
 		lab._adc_device
 	
 	Examples:
@@ -87,7 +87,7 @@ Examples and various testing functions in diagnostics.py
 
 
 ## LS7366 encoder counters 1 and 2:
-	Insantiated automatically by SBC class:
+	Instantiated automatically by SBC class:
 		lab._enc_device1
 		lab._enc_device2
 
